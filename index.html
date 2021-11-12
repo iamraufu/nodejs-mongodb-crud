@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <title>My Vegetable Shop</title>
+</head>
+
+<body class='bg-light'>
+    <h1 class='text-center mt-2 text-danger text-uppercase'>Welcome to my Vegetable Shop</h1>
+
+    <div class="container">
+        <form action="/addProduct" method='post'>
+            <input type="text" name='name' placeholder="Enter Your Vegetable Name" class='form-control mt-3'>
+            <input type="text" name='price' placeholder="Enter Your Vegetable Price" class='form-control mt-3'>
+            <input type="text" name='quantity' placeholder="Enter Your Vegetable Quantity" class='form-control mt-3'>
+            <button class='btn btn-outline-success mt-2'>Add Product</button>
+        </form>
+
+        <div id="products" class='mt-5'></div>
+        <div id="update" class='mt-5'></div>
+    </div>
+
+    <script>
+        function loadAllProducts() {
+            fetch('/products')
+                .then(res => res.json())
+                .then(products => {
+                    const container = document.getElementById('products');
+                    container.innerHTML = '';
+                    products.forEach(pd => {
+                        const p = document.createElement('p');
+                        p.innerHTML = `The <b>${pd.name}</b> costs <i>${pd.price}</i>. I have <u>${pd.quantity}</u> pcs
+                <button class='btn btn-outline-warning' onclick="loadProduct('${pd._id}')">Update</button>    
+                <button class='btn btn-outline-danger' onclick="deleteProduct(event, '${pd._id}')">Delete</button>
+                `;
+                        container.appendChild(p);
+                    });
+                })
+        }
+        loadAllProducts();
+
+        function loadProduct(id) {
+            fetch(`product/${id}`)
+                .then(res => res.json())
+                .then(data => {
+                    const update = document.getElementById('update');
+                    update.innerHTML = `
+                <h3>Update ${data.name} Information</h3>
+                Name <input type="text" value="${data.name}" id="name" class='form-control'>
+                <br>
+                Price <input type="text" value="${data.price}" id="price" class='form-control'>
+                <br>
+                Quantity <input type="text" value="${data.quantity}" id="quantity" class='form-control'>
+                <br>
+                <button onclick="updateProduct('${data._id}')" class='btn btn-outline-info'>Submit</button>
+                `;
+                })
+        }
+
+        function updateProduct(id) {
+            const name = document.getElementById('name').value;
+            const price = document.getElementById('price').value;
+            const quantity = document.getElementById('quantity').value;
+            const product = {
+                id,
+                name,
+                price,
+                quantity
+            };
+
+            fetch(`/update/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(product)
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result) {
+                        loadAllProducts();
+                        document.getElementById('update').innerHTML = '';
+                    }
+                })
+        }
+
+        function deleteProduct(event, id) {
+            fetch(`/delete/${id}`, {
+                    method: "DELETE"
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result) {
+                        event.target.parentNode.style.display = 'none';
+                    }
+                })
+        }
+    </script>
+</body>
+
+</html>
